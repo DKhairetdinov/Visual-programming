@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createUser, createBook, calculateArea, getStatusColor, capitalizeFirst, trimAndTransform, getFirstElement, findById } from '../src/index';
+import { createUser, createBook, calculateArea, getStatusColor, capitalizeFirst, trimAndTransform, getFirstElement, findById } from './index.js';
 
 describe('TypeScript Homework Tests', () => {
     it('should create a user', () => {
