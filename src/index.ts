@@ -1,0 +1,56 @@
+type Transform<T> = (data: T[]) => T[];
+
+type Where<T> = <K extends keyof T>(key: K, value: T[K]) => Transform<T>;
+
+type Sort<T> = <K extends keyof T>(key: K) => Transform<T>;
+
+const where: Where<any> =
+  (key, value) => 
+    (data) =>
+      data.filter((item) => item[key] === value);
+
+const sort: Sort<any> =
+  (key) =>
+    (data) =>
+        [...data].sort((a, b) => {
+          const aval = a[key];
+          const bval = b[key];
+          if(aval < bval) return -1;
+          if(aval > bval) return 1;
+          return 0;
+        });
+
+type Group<T, K extends keyof T> = {
+  key: T[K]; 
+  items: T[];
+};
+
+type GroupBy<T> = <K extends keyof T>(key: K) => (data: T[]) => Group<T, K>[];
+
+const groupBy: GroupBy<any> = (key) => (data) => {
+  const result = data.reduce((acc, item) => {
+    const val = item[key];
+    if(!acc[val]) {
+      acc[val] = { key: val, items: [] };
+    }
+    acc[val].item.push(item);
+
+    return acc;
+  }, {} as any);
+
+  return Object.values(result);
+}
+
+type GroupTransform<T, K extends keyof T> = (groups: Group<T, K>[]) => Group<T, K>[];
+
+type Having<T> = <K extends keyof T>(predicate: (group: Group<T, K>)=> boolean) => GroupTransform<T, K>;
+
+const having: Having<T> = (predicate) => (groups) => {
+  return groups.filter(predicate);
+}
+
+function query<T>(...transforms: Transform<any>[]) : Transform<any> {
+    return (data: T[]): any => {
+      return transform.reduce((currentData, nextTransform) => nextTransform(currentData), data);
+    };
+}
