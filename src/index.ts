@@ -50,7 +50,7 @@ const having: Having<any> = (predicate) => (groups) => {
 }
 
 function query<T>(...transforms: Transform<any>[]) : Transform<any> {
-    return (data: T[]): any => {
+    return (data: T[]) => {
       return transforms.reduce((currentData, nextTransform) => nextTransform(currentData), data as any);
     };
 }
