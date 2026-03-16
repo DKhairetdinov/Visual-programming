@@ -1,15 +1,15 @@
-type Transform<T> = (data: T[]) => T[];
+export type Transform<T> = (data: T[]) => T[];
 
-type Where<T> = <K extends keyof T>(key: K, value: T[K]) => Transform<T>;
+export type Where<T> = <K extends keyof T>(key: K, value: T[K]) => Transform<T>;
 
-type Sort<T> = <K extends keyof T>(key: K) => Transform<T>;
+export type Sort<T> = <K extends keyof T>(key: K) => Transform<T>;
 
-const where: Where<any> =
+export const where: Where<any> =
   (key, value) => 
     (data) =>
       data.filter((item) => item[key] === value);
 
-const sort: Sort<any> =
+export const sort: Sort<any> =
   (key) =>
     (data) =>
         [...data].sort((a, b) => {
@@ -20,14 +20,14 @@ const sort: Sort<any> =
           return 0;
         });
 
-type Group<T, K extends keyof T> = {
+export type Group<T, K extends keyof T> = {
   key: T[K]; 
   items: T[];
 };
 
-type GroupBy<T> = <K extends keyof T>(key: K) => (data: T[]) => Group<T, K>[];
+export type GroupBy<T> = <K extends keyof T>(key: K) => (data: T[]) => Group<T, K>[];
 
-const groupBy: GroupBy<any> = (key) => (data) => {
+export const groupBy: GroupBy<any> = (key) => (data) => {
   const result = data.reduce((acc, item) => {
     const val = item[key];
     if(!acc[val]) {
@@ -41,15 +41,15 @@ const groupBy: GroupBy<any> = (key) => (data) => {
   return Object.values(result);
 }
 
-type GroupTransform<T, K extends keyof T> = (groups: Group<T, K>[]) => Group<T, K>[];
+export type GroupTransform<T, K extends keyof T> = (groups: Group<T, K>[]) => Group<T, K>[];
 
-type Having<T> = <K extends keyof T>(predicate: (group: Group<T, K>)=> boolean) => GroupTransform<T, K>;
+export type Having<T> = <K extends keyof T>(predicate: (group: Group<T, K>)=> boolean) => GroupTransform<T, K>;
 
-const having: Having<any> = (predicate) => (groups) => {
+export const having: Having<any> = (predicate) => (groups) => {
   return groups.filter(predicate);
 }
 
-function query<T>(...transforms: Transform<any>[]) : Transform<any> {
+export function query<T>(...transforms: Transform<any>[]) : Transform<any> {
     return (data: T[]) => {
       return transforms.reduce((currentData, nextTransform) => nextTransform(currentData), data as any);
     };
