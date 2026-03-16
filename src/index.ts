@@ -45,12 +45,12 @@ type GroupTransform<T, K extends keyof T> = (groups: Group<T, K>[]) => Group<T, 
 
 type Having<T> = <K extends keyof T>(predicate: (group: Group<T, K>)=> boolean) => GroupTransform<T, K>;
 
-const having: Having<T> = (predicate) => (groups) => {
+const having: Having<any> = (predicate) => (groups) => {
   return groups.filter(predicate);
 }
 
 function query<T>(...transforms: Transform<any>[]) : Transform<any> {
     return (data: T[]): any => {
-      return transform.reduce((currentData, nextTransform) => nextTransform(currentData), data);
+      return transforms.reduce((currentData, nextTransform) => nextTransform(currentData), data as any);
     };
 }
