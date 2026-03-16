@@ -33,7 +33,7 @@ export const groupBy: GroupBy<any> = (key) => (data) => {
     if(!acc[val]) {
       acc[val] = { key: val, items: [] };
     }
-    acc[val].item.push(item);
+    acc[val].items.push(item);
 
     return acc;
   }, {} as any);
