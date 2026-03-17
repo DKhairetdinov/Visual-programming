@@ -1,56 +1,52 @@
 export type Transform<T> = (data: T[]) => T[];
 
-export type Where<T> = <K extends keyof T>(key: K, value: T[K]) => Transform<T>;
-
-export type Sort<T> = <K extends keyof T>(key: K) => Transform<T>;
-
-export const where: Where<any> =
-  (key, value) => 
-    (data) =>
-      data.filter((item) => item[key] === value);
-
-export const sort: Sort<any> =
-  (key) =>
-    (data) =>
-        [...data].sort((a, b) => {
-          const aval = a[key];
-          const bval = b[key];
-          if(aval < bval) return -1;
-          if(aval > bval) return 1;
-          return 0;
-        });
-
 export type Group<T, K extends keyof T> = {
-  key: T[K]; 
+  key: T[K];
   items: T[];
 };
 
-export type GroupBy<T> = <K extends keyof T>(key: K) => (data: T[]) => Group<T, K>[];
+export type WhereOp<T> = Transform<T> & { tag: 'where' };
+export type GroupByOp<T, K extends keyof T> = ((data: T[]) => Group<T, K>[]) & { tag: 'groupBy' };
+export type HavingOp<T, K extends keyof T> = ((data: Group<T, K>[]) => Group<T, K>[]) & { tag: 'having' };
+export type SortOp<V> = ((data: V[]) => V[]) & { tag: 'sort' };
 
-export const groupBy: GroupBy<any> = (key) => (data) => {
-  const result = data.reduce((acc, item) => {
-    const val = item[key];
-    if(!acc[val]) {
-      acc[val] = { key: val, items: [] };
-    }
-    acc[val].items.push(item);
+export const where = <T, K extends keyof T>(key: K, value: T[K]): WhereOp<T> => {
+  const fn = (data: T[]) => data.filter((item) => item[key] === value);
+  return Object.assign(fn, { tag: 'where' as const });
+};
 
-    return acc;
-  }, {} as any);
+export const sort = <V>(key: keyof V): SortOp<V> => {
+  const fn = (data: V[]) => [...data].sort((a, b) => (a[key] > b[key] ? 1 : -1));
+  return Object.assign(fn, { tag: 'sort' as const });
+};
 
-  return Object.values(result);
-}
+export const groupBy = <T, K extends keyof T>(key: K): GroupByOp<T, K> => {
+  const fn = (data: T[]) => {
+    const result = data.reduce((acc, item) => {
+      const val = item[key] as any;
+      if (!acc[val]) acc[val] = { key: item[key], items: [] };
+      acc[val].items.push(item);
+      return acc;
+    }, {} as any);
+    return Object.values(result);
+  };
+  return Object.assign(fn, { tag: 'groupBy' as const }) as GroupByOp<T, K>;
+};
 
-export type GroupTransform<T, K extends keyof T> = (groups: Group<T, K>[]) => Group<T, K>[];
+export const having = <T, K extends keyof T>(predicate: (group: Group<T, K>) => boolean): HavingOp<T, K> => {
+  const fn = (groups: Group<T, K>[]) => groups.filter(predicate);
+  return Object.assign(fn, { tag: 'having' as const });
+};
 
-export type Having<T> = <K extends keyof T>(predicate: (group: Group<T, K>)=> boolean) => GroupTransform<T, K>;
-
-export const having: Having<any> = (predicate) => (groups) => {
-  return groups.filter(predicate);
-}
-
-export function query<T>(...transforms: Transform<any>[]) : Transform<any> {
-    return (data: T[]) => {
-      return transforms.reduce((currentData, nextTransform) => nextTransform(currentData), data as any);
-    };
+export function query<T, K extends keyof T = any>(
+  ...transforms: [
+    ...WhereOp<T>[], 
+    ...GroupByOp<T, K>[], 
+    ...HavingOp<T, K>[],
+    ...SortOp<any>[]
+  ]
+): (data: T[]) => any {
+  return (data: T[]) => {
+    return transforms.reduce((currentData, nextTransform) => nextTransform(currentData as any), data as any);
+  };
 }
